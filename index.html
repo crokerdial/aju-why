@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>아주 중요왜 - AI 질문 코치</title>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Poppins:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #FFD54F; --bg: #FFFDF7; --dark: #3E2723; --gold: #F59E0B; --green: #E8F5E9; --blue: #E3F2FD; }
+        body { font-family: 'Gowun Dodum', sans-serif; background: #f0f0f0; margin: 0; display: flex; justify-content: center; height: 100dvh; color: var(--dark); overflow: hidden; }
+        .app-container { background: var(--bg); width: 100%; max-width: 480px; height: 100dvh; display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.1); }
+        .header { background: var(--primary); padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom-left-radius: 25px; border-bottom-right-radius: 25px; z-index: 10; font-weight: bold; }
+        .clear-btn { background: rgba(255,255,255,0.5); border: none; padding: 5px 10px; border-radius: 10px; font-size: 12px; cursor: pointer; font-family: inherit; }
+        #brandIntro { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 9999; display: flex; flex-direction: column; padding: 35px 25px; box-sizing: border-box; overflow-y: auto; }
+        .card { background: white; padding: 20px; border-radius: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.03); margin-bottom: 15px; border: 1px solid #f1f5f9; }
+        .m-title { font-size: 24px; line-height: 1.3; font-weight: bold; margin-bottom: 10px; }
+        .m-title b { color: var(--gold); }
+        .start-btn { background: var(--dark); color: white; border: none; padding: 18px; border-radius: 20px; font-size: 18px; font-weight: bold; cursor: pointer; font-family: inherit; }
+        .chat-container { flex: 1; padding: 20px 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .message { max-width: 85%; padding: 15px 18px; border-radius: 22px; line-height: 1.6; font-size: 16px; position: relative; word-break: keep-all; }
+        .user-msg { background: #fff; align-self: flex-end; border-bottom-right-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .ai-msg { background: #FFF9C4; align-self: flex-start; border-bottom-left-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .tts-btn { position: absolute; top: 10px; right: -40px; background: white; border: 1px solid #ddd; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+        .meta-box { margin-top: 12px; background: var(--green); padding: 15px; border-radius: 15px; font-size: 15px; font-weight: bold; color: #1B5E20; border-left: 5px solid #4CAF50; }
+        .fact-box { margin-top: 15px; background: var(--blue); padding: 15px; border-radius: 15px; font-size: 14px; display: none; border-left: 5px solid #42A5F5; }
+        .fact-btn { margin-top: 10px; background: white; border: 1px solid #42A5F5; color: #42A5F5; padding: 8px 15px; border-radius: 18px; cursor: pointer; font-size: 13px; font-family: inherit; }
+        .input-area { padding: 10px 15px 30px; background: white; border-top: 1px solid #f1f5f9; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .mic-btn { width: 68px; height: 68px; border-radius: 50%; background: var(--primary); border: none; box-shadow: 0 8px 20px rgba(255, 213, 79, 0.4); cursor: pointer; font-size: 30px; }
+        .mic-btn.recording { background: #FF5252; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(255, 82, 82, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0); } }
+        .text-input-wrap { display: flex; width: 100%; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 12px 18px; border: 1px solid #e2e8f0; border-radius: 28px; font-size: 16px; font-family: inherit; outline: none; }
+        .send-btn { background: var(--dark); color: white; border: none; padding: 0 20px; border-radius: 25px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div id="brandIntro">
+        <div class="card">
+            <div class="m-title">정답보다 중요한 것은<br><b>질문하는 힘</b>입니다.</div>
+            <p style="font-size: 15px; color: #64748b;">지식은 AI가 찾아주지만,<br>통찰은 아이의 질문에서 시작됩니다.</p>
+        </div>
+        <div class="card" style="background: #fffaf0;">
+            <p style="line-height: 1.6;">'아주 중요왜'는 아이의 호기심을<br><b>메타인지</b>와 <b>창의성</b>으로 바꿔줍니다.</p>
+        </div>
+        <button class="start-btn" onclick="startApp()">대화 시작하기 🎙️</button>
+    </div>
+
+    <div class="header">
+        <span>아주 중요왜 💡</span>
+        <button class="clear-btn" onclick="clearHistory()">기록 삭제</button>
+    </div>
+    
+    <div class="chat-container" id="chatContainer"></div>
+
+    <div class="input-area">
+        <button class="mic-btn" id="micBtn" onclick="toggleRecording()">🎙️</button>
+        <div style="font-size: 12px; color: #94a3b8;" id="micStatus">마이크를 눌러서 말하기</div>
+        <div class="text-input-wrap">
+            <input type="text" id="textInput" placeholder="질문을 입력하세요..." onkeypress="handleKeyPress(event)">
+            <button class="send-btn" onclick="sendText()">전송</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ⚠️ 주의: API_KEY가 코드에서 완전히 사라졌습니다!
+    let chatHistory = JSON.parse(localStorage.getItem('aju_history')) || [];
+
+    window.onload = () => {
+        if (chatHistory.length > 0) {
+            chatHistory.forEach(item => {
+                if(item.role === 'user') renderMessage(item.parts[0].text, 'user', false);
+                else {
+                    try {
+                        const data = JSON.parse(item.parts[0].text);
+                        renderMessage(data.answer, 'ai', false, data.scientificFact, data.metaQuestion);
+                    } catch(e) { renderMessage(item.parts[0].text, 'ai', false); }
+                }
+            });
+            document.getElementById('brandIntro').style.display = 'none';
+        }
+    };
+
+    function startApp() { document.getElementById('brandIntro').style.display = 'none'; }
+
+    function clearHistory() {
+        if(confirm("모든 대화 기록을 지울까요?")) {
+            localStorage.removeItem('aju_history');
+            chatHistory = [];
+            document.getElementById('chatContainer').innerHTML = '';
+            location.reload();
+        }
+    }
+
+    function speak(text) {
+        const msg = "AI가 읽어줄 수도 있지만, 부모님의 목소리로 직접 읽어주시면 아이와 더 깊은 유대감을 쌓을 수 있어요! 그래도 AI 목소리로 들어보시겠어요?";
+        if(confirm(msg)) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'ko-KR';
+            utterance.rate = 0.9;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function renderMessage(text, sender, isNew = true, factText = null, metaText = null) {
+        const chatContainer = document.getElementById('chatContainer');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}-msg`;
+        msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+
+        if (sender === 'ai') {
+            const ttsBtn = document.createElement('button');
+            ttsBtn.className = 'tts-btn';
+            ttsBtn.innerHTML = '🔊';
+            ttsBtn.onclick = () => speak(text.replace(/<br>/g, ' '));
+            msgDiv.appendChild(ttsBtn);
+
+            if (metaText) {
+                const metaBox = document.createElement('div');
+                metaBox.className = 'meta-box';
+                metaBox.innerHTML = `🗣️ <strong>아이에게 이렇게 물어보세요:</strong><br>${metaText}`;
+                msgDiv.appendChild(metaBox);
+            }
+            if (factText) {
+                const btnId = 'fact-' + Date.now();
+                const factBtn = document.createElement('button');
+                factBtn.className = 'fact-btn';
+                factBtn.innerHTML = '🔬 과학적 근거 확인';
+                factBtn.onclick = () => {
+                    const box = document.getElementById(btnId);
+                    box.style.display = box.style.display === 'block' ? 'none' : 'block';
+                };
+                const factBox = document.createElement('div');
+                factBox.className = 'fact-box';
+                factBox.id = btnId;
+                factBox.innerHTML = factText;
+                msgDiv.appendChild(document.createElement('br'));
+                msgDiv.appendChild(factBtn);
+                msgDiv.appendChild(factBox);
+            }
+        }
+        chatContainer.appendChild(msgDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        if(isNew) localStorage.setItem('aju_history', JSON.stringify(chatHistory));
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ko-KR';
+        recognition.onstart = () => { document.getElementById('micBtn').classList.add('recording'); };
+        recognition.onresult = (event) => {
+            const text = event.results[0][0].transcript;
+            handleUserMessage(text);
+        };
+        recognition.onend = () => { document.getElementById('micBtn').classList.remove('recording'); };
+    }
+
+    async function toggleRecording() { 
+        try { await navigator.mediaDevices.getUserMedia({ audio: true }); recognition.start(); } 
+        catch(e) { alert("마이크 권한이 필요합니다."); }
+    }
+
+    function handleKeyPress(e) { if(e.key === 'Enter') sendText(); }
+    function sendText() {
+        const input = document.getElementById('textInput');
+        if(input.value.trim()) { handleUserMessage(input.value); input.value = ''; }
+    }
+
+    async function handleUserMessage(text) {
+        renderMessage(text, 'user');
+        chatHistory.push({ "role": "user", "parts": [{ "text": text }] });
+        
+        const systemPrompt = `너는 4~5세 아이 부모를 돕는 '하브루타 대화 코치'야. JSON으로만 응답해. { "answer": "공감과 비유 설명", "metaQuestion": "꼬리 질문", "scientificFact": "과학 근거" }`;
+        
+        try {
+            // 💡 구글 주소가 아니라 방금 우리가 만든 Netlify 서버 주소로 요청을 보냅니다.
+            const response = await fetch(`/.netlify/functions/gemini`, {
+                method: 'POST',
+                body: JSON.stringify({ system_instruction: { parts: [{ text: systemPrompt }] }, contents: chatHistory })
+            });
+            
+            const data = await response.json();
+            
+            // 에러가 반환되었을 경우 처리
+            if (data.error) {
+                renderMessage("잠시 머리가 아파요! 🤕 (오류: " + data.error.message + ")", 'ai', false);
+                return;
+            }
+
+            const aiRaw = data.candidates[0].content.parts[0].text;
+            const parsed = JSON.parse(aiRaw);
+            
+            chatHistory.push({ "role": "model", "parts": [{ "text": aiRaw }] });
+            renderMessage(parsed.answer, 'ai', true, parsed.scientificFact, parsed.metaQuestion);
+        } catch(e) {
+            renderMessage("서버와 연결이 끊어졌어요. 기록 삭제 후 다시 시도해주세요.", 'ai', false);
+        }
+    }
+</script>
+</body>
+</html>
