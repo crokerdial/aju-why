@@ -4,13 +4,17 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  // 2. Vercel은 JSON.parse가 필요 없이 req.body로 바로 내용을 꺼냅니다.
-  const { contents, system_instruction } = req.body;
+  // 💡 2. (추가된 부분) 버셀이 데이터를 단순 글자(String)로 오해했다면, 다시 예쁘게 포장(JSON)해줍니다!
+  let parsedBody = req.body;
+  if (typeof req.body === 'string') {
+    parsedBody = JSON.parse(req.body);
+  }
 
-  // 3. Vercel 환경 변수에 등록한 API 키 꺼내기
+  // 3. 포장지 안에서 질문(contents)과 설정(system_instruction) 꺼내기
+  const { contents, system_instruction } = parsedBody;
+
+  // 4. Vercel 환경 변수에 등록한 API 키 꺼내기
   const API_KEY = process.env.GEMINI_API_KEY;
-
-  // 4. 안정적인 gemini-1.5-flash 모델 사용
   const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
   try {
@@ -21,8 +25,6 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-
-    // 5. Vercel 방식으로 프론트엔드에 정답 전달하기
     return res.status(200).json(data);
 
   } catch (error) {
