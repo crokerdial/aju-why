@@ -1,15 +1,16 @@
-exports.handler = async (event, context) => {
-  // POST 요청이 아니면 차단
-  if (event.httpMethod !== "POST") {
-    return { statusCode: 405, body: "Method Not Allowed" };
+export default async function handler(req, res) {
+  // 1. POST 요청이 아니면 차단
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const { contents, system_instruction } = JSON.parse(event.body);
-  
-  // 💡 Netlify 금고에 숨겨둔 API 키를 여기서 몰래 꺼내옵니다!
-  const API_KEY = process.env.GEMINI_API_KEY; 
+  // 2. Vercel은 JSON.parse가 필요 없이 req.body로 바로 내용을 꺼냅니다.
+  const { contents, system_instruction } = req.body;
 
-  // 가장 안정적인 gemini-1.5-flash 모델로 고정
+  // 3. Vercel 환경 변수에 등록한 API 키 꺼내기
+  const API_KEY = process.env.GEMINI_API_KEY;
+
+  // 4. 안정적인 gemini-1.5-flash 모델 사용
   const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
   try {
@@ -20,11 +21,12 @@ exports.handler = async (event, context) => {
     });
 
     const data = await response.json();
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data)
-    };
+
+    // 5. Vercel 방식으로 프론트엔드에 정답 전달하기
+    return res.status(200).json(data);
+
   } catch (error) {
-    return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
+    console.error("서버 에러:", error);
+    return res.status(500).json({ error: { message: "서버 처리 중 오류가 발생했습니다." } });
   }
-};
+}
