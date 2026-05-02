@@ -1,48 +1,129 @@
-async function handleUserMessage(text) {
-  // 1. 사용자 메시지를 화면에 띄우고 대화 기록에 저장
-  renderMessage(text, 'user');
-  chatHistory.push({ "role": "user", "parts": [{ "text": text }] });
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>하브루타 대화 코치</title>
+  <style>
+    /* 깔끔하고 모바일에 최적화된 채팅 UI 디자인 */
+    body { font-family: 'Malgun Gothic', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; height: 100vh; box-sizing: border-box; }
+    #chat-wrapper { width: 100%; max-width: 500px; background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* 채팅 내용이 보이는 영역 */
+    #chat-history { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .message { max-width: 80%; padding: 12px 16px; border-radius: 15px; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
+    .message.user { align-self: flex-end; background-color: #007bff; color: white; border-bottom-right-radius: 2px; }
+    .message.ai { align-self: flex-start; background-color: #f1f3f5; color: #333; border-bottom-left-radius: 2px; }
+    
+    /* 입력창 영역 */
+    .input-area { display: flex; padding: 15px; background: #fff; border-top: 1px solid #eee; }
+    #user-input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-size: 15px; }
+    #user-input:focus { border-color: #007bff; }
+    #send-btn { margin-left: 10px; padding: 0 20px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 15px; transition: 0.2s; }
+    #send-btn:hover { background-color: #0056b3; }
+  </style>
+</head>
+<body>
 
-  // 2. 시스템 프롬프트 (하브루타 코치 역할 및 JSON 형식 지정)
-  const systemPrompt = `너는 4~5세 아이 부모를 돕는 '하브루타 대화 코치'야. JSON으로만 응답해. { "answer": "공감과 비유 설명", "question": "아이에게 던질 질문" }`;
+  <div id="chat-wrapper">
+    <div id="chat-history">
+      <div class="message ai">안녕하세요! 4~5세 아이를 위한 하브루타 대화 코치입니다. 아이가 오늘 어떤 엉뚱한 질문을 했나요? 😊</div>
+    </div>
+    
+    <div class="input-area">
+      <input type="text" id="user-input" placeholder="예: 봄에 꽃이 왜 펴?" onkeypress="handleKeyPress(event)">
+      <button id="send-btn" onclick="sendMessage()">전송</button>
+    </div>
+  </div>
 
-  try {
-    // 3. Vercel 백엔드 서버로 요청 보내기
-    const response = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        system_instruction: { parts: [{ text: systemPrompt }] }, 
-        contents: chatHistory 
-      })
-    });
+  <script>
+    const chatHistoryContainer = document.getElementById('chat-history');
+    const userInputField = document.getElementById('user-input');
+    
+    // AI가 문맥을 기억하도록 대화 기록을 저장하는 주머니
+    let chatHistory = [];
 
-    const data = await response.json();
-
-    // 4. 에러가 반환되었을 경우 처리
-    if (data.error) {
-      renderMessage("잠시 머리가 아파요! 🤯 (오류: " + data.error.message + ")", 'ai', false);
-      return;
+    // 엔터키를 누르면 전송되도록 하는 기능
+    function handleKeyPress(event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
     }
 
-    // 5. AI가 보낸 원본 텍스트 가져오기
-    const aiRaw = data.candidates[0].content.parts[0].text;
+    // 화면에 말풍선을 그려주는 함수
+    function renderMessage(text, sender) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `message ${sender}`;
+      msgDiv.innerHTML = text; // HTML 태그(<br>, <strong> 등) 적용을 위해 innerHTML 사용
+      chatHistoryContainer.appendChild(msgDiv);
+      // 새 메시지가 나오면 스크롤을 맨 아래로 자동 이동
+      chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
+    }
 
-    // 🧹 6. [핵심] AI가 몰래 붙인 마크다운(```json) 찌꺼기 완벽 청소
-    const cleanText = aiRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
-    
-    // 7. 청소된 깨끗한 텍스트를 JSON 객체로 변환
-    const parsed = JSON.parse(cleanText);
+    // 전송 버튼을 눌렀을 때 실행되는 메인 로직
+    async function sendMessage() {
+      const text = userInputField.value.trim();
+      if (!text) return; // 빈칸이면 무시
 
-    // 8. 화면에 AI의 공감 답변과 하브루타 질문 출력
-    // (UI에 더 예쁘게 나오도록 줄바꿈과 굵기 처리를 살짝 더했습니다!)
-    renderMessage(parsed.answer + "<br><br><strong>💡 " + parsed.question + "</strong>", 'ai');
-    
-    // 9. 다음 대화를 위해 AI의 원본 답변을 기록에 저장
-    chatHistory.push({ "role": "model", "parts": [{ "text": aiRaw }] });
+      // 1. 내 질문 화면에 띄우고 기록에 저장
+      userInputField.value = ''; 
+      renderMessage(text, 'user');
+      chatHistory.push({ "role": "user", "parts": [{ "text": text }] });
 
-  } catch (error) {
-    console.error("프론트엔드 에러 상세 확인:", error);
-    renderMessage("서버와 연결이 끊어졌어요. 기록 삭제 후 다시 시도해주세요.", 'ai', false);
-  }
-}
+      // 2. AI에게 부여할 역할(시스템 프롬프트)
+      const systemPrompt = `너는 4~5세 아이 부모를 돕는 '하브루타 대화 코치'야. 반드시 JSON 형식으로만 응답해. 형식: { "answer": "아이의 눈높이에 맞춘 공감과 비유적 설명", "question": "아이의 생각을 넓혀줄 수 있는 꼬리 질문" }`;
+
+      // 3. 로딩 중 표시 띄우기
+      const loadingId = "loading-" + Date.now();
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = "message ai";
+      loadingDiv.id = loadingId;
+      loadingDiv.textContent = "답변을 고민하는 중... 🤔";
+      chatHistoryContainer.appendChild(loadingDiv);
+      chatHistoryContainer.scrollTop = chatHistoryContainer.scrollHeight;
+
+      try {
+        // 4. 버셀(Vercel) 서버로 데이터 전송!
+        const response = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            system_instruction: { parts: [{ text: systemPrompt }] }, 
+            contents: chatHistory 
+          })
+        });
+
+        const data = await response.json();
+        
+        // 답변이 오면 로딩 표시 삭제
+        document.getElementById(loadingId).remove();
+
+        // 서버 쪽 에러가 났을 때 방어
+        if (data.error) {
+          renderMessage("앗, 오류가 발생했어요! 🤯 (" + data.error.message + ")", 'ai');
+          return;
+        }
+
+        // 5. [핵심] AI가 준 답변에서 마크다운 찌꺼기(```json) 깔끔하게 청소!
+        const aiRaw = data.candidates[0].content.parts[0].text;
+        const cleanText = aiRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
+        
+        // 6. 청소된 깨끗한 텍스트를 자바스크립트 객체로 변환
+        const parsed = JSON.parse(cleanText);
+
+        // 7. 화면에 예쁘게 출력 (답변 + 줄바꿈 + 굵은 글씨 꼬리질문)
+        renderMessage(parsed.answer + "<br><br><strong>💡 " + parsed.question + "</strong>", 'ai');
+        
+        // 8. 다음 대화를 위해 AI의 원본 답변을 기록에 저장
+        chatHistory.push({ "role": "model", "parts": [{ "text": aiRaw }] });
+
+      } catch (error) {
+        console.error("에러 발생:", error);
+        document.getElementById(loadingId)?.remove();
+        renderMessage("서버와 연결이 끊어졌어요. 새로고침 후 다시 시도해주세요. 😭", 'ai');
+      }
+    }
+  </script>
+
+</body>
+</html>
