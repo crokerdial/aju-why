@@ -27,7 +27,6 @@
       overflow: hidden;
     }
     
-    /* 돌봄교실 컨셉에 맞춘 따뜻한 그린 톤 헤더 */
     #header {
       padding: 15px 20px;
       background-color: #32d078;
@@ -49,7 +48,6 @@
       font-weight: bold;
     }
 
-    /* 학년 탭 */
     #age-tabs {
       display: flex;
       background-color: #fff;
@@ -86,7 +84,17 @@
     .user { align-self: flex-end; background-color: #32d078; color: white; border-bottom-right-radius: 2px; }
     .ai { align-self: flex-start; background-color: #f1f3f5; color: #333; border-bottom-left-radius: 2px; }
     
-    /* 💌 부모님 알림장 박스 스타일 (하이라이트) */
+    /* 🆕 하브루타 질문 강조 스타일 */
+    .havruta-question {
+      margin-top: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #1e874c; /* 진한 초록색으로 시선 유도 */
+      background-color: #e8f5e9;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
     .report-box {
       margin-top: 15px;
       padding: 15px;
@@ -105,7 +113,6 @@
       align-items: center;
       gap: 5px;
     }
-    /* 홈페이지 이동 버튼 스타일 */
     .link-btn {
       display: inline-block;
       margin-top: 10px;
@@ -208,13 +215,15 @@
     chatHistory.push({ "role": "user", "parts": [{ "text": text }] });
     input.value = '';
 
-    // 🏆 [핵심 프롬프트] 아이와의 대화 내용과 부모님 알림장을 분리해서 생성!
+    // 🏆 [핵심 프롬프트 업데이트] 공감과 꼬리질문을 명확히 분리!
     const systemPrompt = `
-      너는 ${currentAge} 아이가 방과 후 돌봄교실에서 대화하는 'AI 선생님'이야.
+      너는 ${currentAge} 아이가 방과 후 돌봄교실에서 대화하는 'AI 하브루타 선생님'이야.
+      가장 중요한 원칙: 아이와의 대화는 반드시 아이가 스스로 생각하고 대답할 수 있는 '질문'으로 끝나야 해.
       반드시 아래 JSON 형식으로만 응답해.
       
       {
-        "replyToChild": "아이의 말에 공감해주고, 사고력을 넓혀주는 꼬리 질문 (대화체)",
+        "reply_empathy": "아이의 말에 대한 다정한 공감과 눈높이에 맞춘 짧고 쉬운 설명",
+        "reply_question": "아이의 대답을 유도하는 하브루타식 꼬리 질문 (반드시 물음표(?)로 끝날 것)",
         "reportForParent": {
           "keyword": "대화에서 파악한 아이의 현재 관심사 1단어 (예: 별자리)",
           "placeName": "관심사와 연관된 공공 체험 시설명 (예: 국립과천과학관)",
@@ -249,9 +258,13 @@
       const cleanText = aiRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanText);
 
-      // 🏆 화면 출력부: 대화 내용 + 부모님 알림장(노란 박스) + 홈페이지 링크 버튼
+      // 🏆 화면 출력부: 공감 텍스트 -> [강조된 하브루타 질문] -> 부모님 알림장
       const aiHtml = `
-        <div>${parsed.replyToChild}</div>
+        <div>${parsed.reply_empathy}</div>
+        
+        <div class="havruta-question">
+          🤔 ${parsed.reply_question}
+        </div>
         
         <div class="report-box">
           <div class="report-title">💌 퇴근길 학부모 알림장 도착!</div>
