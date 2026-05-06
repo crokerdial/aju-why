@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>아이톡톡 - 하브루타 & 체험 코치</title>
+  <title>아이톡톡 브릿지 - 돌봄교실 AI 알림장</title>
   <style>
-    /* 전체 배경 및 컨테이너 */
     body {
       font-family: 'Malgun Gothic', sans-serif;
-      background-color: #f4f6f8; /* 대회용으로 조금 더 신뢰감 있는 톤으로 변경 */
+      background-color: #f0f4f8; 
       margin: 0;
       display: flex;
       justify-content: center;
@@ -18,7 +17,7 @@
     }
     #chat-container {
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
       height: 90vh;
       background: white;
       display: flex;
@@ -28,11 +27,11 @@
       overflow: hidden;
     }
     
-    /* 상단 헤더 */
+    /* 돌봄교실 컨셉에 맞춘 따뜻한 그린 톤 헤더 */
     #header {
       padding: 15px 20px;
-      background-color: #ffcc00;
-      color: #333;
+      background-color: #32d078;
+      color: white;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -40,7 +39,7 @@
       font-size: 16px;
     }
     #delete-btn {
-      background: #ff4444;
+      background: #1e874c;
       color: white;
       border: none;
       padding: 6px 12px;
@@ -50,7 +49,7 @@
       font-weight: bold;
     }
 
-    /* 연령 선택 탭 디자인 */
+    /* 학년 탭 */
     #age-tabs {
       display: flex;
       background-color: #fff;
@@ -69,38 +68,58 @@
       transition: all 0.3s ease;
     }
     .tab-btn.active {
-      color: #d49a00;
-      border-bottom: 3px solid #ffcc00;
-      background-color: #fffaf0;
+      color: #1e874c;
+      border-bottom: 3px solid #32d078;
+      background-color: #f4fdf8;
     }
 
-    /* 채팅창 영역 */
     #chat-history {
       flex: 1;
       padding: 20px;
       overflow-y: auto;
-      background-color: #fcfdfe;
+      background-color: #fafbfc;
       display: flex;
       flex-direction: column;
       gap: 15px;
     }
     .message { padding: 14px 18px; border-radius: 15px; font-size: 15px; line-height: 1.6; max-width: 85%; word-break: break-all; }
-    .user { align-self: flex-end; background-color: #ffcc00; color: #333; border-bottom-right-radius: 2px; }
+    .user { align-self: flex-end; background-color: #32d078; color: white; border-bottom-right-radius: 2px; }
     .ai { align-self: flex-start; background-color: #f1f3f5; color: #333; border-bottom-left-radius: 2px; }
     
-    /* 🆕 체험 장소 추천 박스 스타일 */
-    .place-box {
+    /* 💌 부모님 알림장 박스 스타일 (하이라이트) */
+    .report-box {
       margin-top: 15px;
-      padding: 12px;
-      background-color: #e6f7ff;
-      border: 1px solid #91d5ff;
-      border-radius: 10px;
-      font-size: 13.5px;
-      color: #0056b3;
-      line-height: 1.5;
+      padding: 15px;
+      background-color: #fffde7;
+      border: 2px solid #ffeb3b;
+      border-radius: 12px;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
     }
-    
-    /* 입력창 영역 */
+    .report-title {
+      font-weight: bold;
+      color: #d49a00;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    /* 홈페이지 이동 버튼 스타일 */
+    .link-btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      color: white !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 12px;
+      transition: background 0.2s;
+    }
+    .link-btn:hover { background-color: #0056b3; }
+
     #input-area {
       padding: 15px;
       display: flex;
@@ -115,7 +134,7 @@
       outline: none;
       font-size: 14px;
     }
-    #user-input:focus { border-color: #ffcc00; }
+    #user-input:focus { border-color: #32d078; }
     #send-btn {
       margin-left: 10px;
       background: #333;
@@ -132,22 +151,22 @@
 
 <div id="chat-container">
   <div id="header">
-    <span>💡 아이톡톡 (하브루타 & 체험 코치)</span>
+    <span>🌱 아이톡톡 브릿지</span>
     <button id="delete-btn" onclick="clearHistory()">기록 삭제</button>
   </div>
   
   <div id="age-tabs">
-    <button class="tab-btn active" onclick="changeAge('4~5세(누리과정)', this)">4~5세</button>
-    <button class="tab-btn" onclick="changeAge('6~7세(누리과정)', this)">6~7세</button>
-    <button class="tab-btn" onclick="changeAge('8~10세(초등저학년)', this)">8~10세</button>
+    <button class="tab-btn active" onclick="changeAge('초등 1~2학년(돌봄교실)', this)">1~2학년</button>
+    <button class="tab-btn" onclick="changeAge('초등 3~4학년(늘봄학교)', this)">3~4학년</button>
+    <button class="tab-btn" onclick="changeAge('유아(참고용)', this)">유아</button>
   </div>
   
   <div id="chat-history">
-    <div class="message ai">안녕하세요! 연령별 하브루타 대화와 동네 체험 인프라를 연결해주는 코치입니다. 오늘 아이가 어떤 질문을 했나요? 😊</div>
+    <div class="message ai">안녕! 나는 돌봄교실 AI 선생님이야. 오늘 학교에서 제일 재밌었던 일이나 궁금했던 게 뭐야? 😃</div>
   </div>
 
   <div id="input-area">
-    <input type="text" id="user-input" placeholder="예: 비행기는 어떻게 하늘을 날아?" onkeypress="if(event.key==='Enter') sendMessage()">
+    <input type="text" id="user-input" placeholder="여기에 대답을 적어주세요..." onkeypress="if(event.key==='Enter') sendMessage()">
     <button id="send-btn" onclick="sendMessage()">전송</button>
   </div>
 </div>
@@ -155,7 +174,7 @@
 <script>
   let chatHistory = [];
   const chatHistoryDiv = document.getElementById('chat-history');
-  let currentAge = '4~5세(누리과정)';
+  let currentAge = '초등 1~2학년(돌봄교실)';
 
   function renderMessage(text, sender) {
     const msgDiv = document.createElement('div');
@@ -168,7 +187,7 @@
   function clearHistory() {
     if(confirm("대화 기록을 지우고 새로 시작할까요?")) {
       chatHistory = [];
-      chatHistoryDiv.innerHTML = `<div class="message ai">기록이 삭제되었습니다. <strong>${currentAge}</strong> 아이와의 새로운 대화를 시작해요!</div>`;
+      chatHistoryDiv.innerHTML = `<div class="message ai">기록이 삭제되었습니다. <strong>${currentAge}</strong> 친구와의 새로운 대화를 시작해요!</div>`;
     }
   }
 
@@ -177,7 +196,7 @@
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(tab => tab.classList.remove('active'));
     btnElement.classList.add('active');
-    renderMessage(`설정이 변경되었습니다. <strong>${currentAge}</strong> 수준에 맞춘 하브루타 대화와 맞춤형 체험 장소를 추천해 드릴게요! ✨`, 'ai');
+    renderMessage(`설정이 변경되었습니다. <strong>${currentAge}</strong> 수준에 맞춘 하브루타 대화와 부모님 알림장을 작성해 드릴게요! ✨`, 'ai');
   }
 
   async function sendMessage() {
@@ -189,15 +208,19 @@
     chatHistory.push({ "role": "user", "parts": [{ "text": text }] });
     input.value = '';
 
-    // 🏆 [대회용 핵심 프롬프트] AI에게 하브루타 + 공공 인프라 추천 역할을 동시에 부여합니다!
+    // 🏆 [핵심 프롬프트] 아이와의 대화 내용과 부모님 알림장을 분리해서 생성!
     const systemPrompt = `
-      너는 ${currentAge} 아이의 부모를 돕는 '하브루타 대화 코치'이자 '공공데이터 기반 지역 체험 추천 전문가'야.
-      반드시 JSON 형식으로만 응답해.
-      형식:
+      너는 ${currentAge} 아이가 방과 후 돌봄교실에서 대화하는 'AI 선생님'이야.
+      반드시 아래 JSON 형식으로만 응답해.
+      
       {
-        "answer": "${currentAge} 아이의 눈높이와 인지 발달 수준에 맞춘 다정한 공감 및 비유적 설명",
-        "question": "아이의 사고력을 한 단계 더 넓혀줄 수 있는 꼬리 질문 (1개)",
-        "place": "대화 주제와 연관되어 주말에 아이와 방문하기 좋은 '공공시설(국립/시립 박물관, 과학관, 도서관, 생태공원 등)'을 1곳 추천하고 그 이유를 짧게 설명 (예: 이번 주말에는 근처 [OO자연사박물관]에 방문해 보는 건 어떨까요? 공룡 화석을 직접 보면...)"
+        "replyToChild": "아이의 말에 공감해주고, 사고력을 넓혀주는 꼬리 질문 (대화체)",
+        "reportForParent": {
+          "keyword": "대화에서 파악한 아이의 현재 관심사 1단어 (예: 별자리)",
+          "placeName": "관심사와 연관된 공공 체험 시설명 (예: 국립과천과학관)",
+          "placeReason": "이 장소를 부모님께 추천하는 이유 (친절한 알림장 톤으로)",
+          "placeUrl": "해당 장소의 공식 홈페이지 주소. 만약 정확한 주소를 모른다면 'https://search.naver.com/search.naver?query=장소명' 형태로 검색 링크를 생성해."
+        }
       }
     `;
 
@@ -205,7 +228,7 @@
     const loadingDiv = document.createElement('div');
     loadingDiv.className = "message ai";
     loadingDiv.id = loadingId;
-    loadingDiv.textContent = "교육과정 연계 답변과 추천 장소를 찾는 중... 🔍";
+    loadingDiv.textContent = "알림장과 추천 장소를 검색하는 중... 🔍";
     chatHistoryDiv.appendChild(loadingDiv);
     chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
 
@@ -226,13 +249,19 @@
       const cleanText = aiRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanText);
 
-      // 🏆 화면 출력부 (답변 + 꼬리질문 + 추천 장소 UI 합성)
+      // 🏆 화면 출력부: 대화 내용 + 부모님 알림장(노란 박스) + 홈페이지 링크 버튼
       const aiHtml = `
-        <div>${parsed.answer}</div>
-        <br>
-        <div><strong>💡 ${parsed.question}</strong></div>
-        <div class="place-box">
-          🏛️ <strong>공공 인프라 체험 추천:</strong><br>${parsed.place}
+        <div>${parsed.replyToChild}</div>
+        
+        <div class="report-box">
+          <div class="report-title">💌 퇴근길 학부모 알림장 도착!</div>
+          <strong>📌 관심 키워드:</strong> ${parsed.reportForParent.keyword}<br>
+          <strong>🏛️ 이번 주말 추천 공공시설:</strong> ${parsed.reportForParent.placeName}<br><br>
+          <strong>💡 AI 선생님의 한마디:</strong><br>${parsed.reportForParent.placeReason}<br>
+          
+          <a href="${parsed.reportForParent.placeUrl}" target="_blank" class="link-btn">
+             🌐 ${parsed.reportForParent.placeName} 홈페이지/정보 바로가기
+          </a>
         </div>
       `;
       
