@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>하브루타 대화 코치</title>
   <style>
-    /* 대표님의 원래 디자인: 노란색 테마 */
+    /* 전체 배경 및 컨테이너 */
     body {
       font-family: 'Malgun Gothic', sans-serif;
       background-color: #fff9e6; /* 연한 노란색 배경 */
@@ -14,6 +14,7 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
+      box-sizing: border-box;
     }
     #chat-container {
       width: 100%;
@@ -26,6 +27,7 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
       overflow: hidden;
     }
+    
     /* 상단 헤더 */
     #header {
       padding: 15px 20px;
@@ -40,12 +42,39 @@
       background: #ff4444;
       color: white;
       border: none;
-      padding: 5px 10px;
+      padding: 6px 12px;
       border-radius: 5px;
       cursor: pointer;
       font-size: 12px;
+      font-weight: bold;
     }
-    /* 채팅창 */
+
+    /* 🆕 연령 선택 탭 디자인 */
+    #age-tabs {
+      display: flex;
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 12px 0;
+      background: none;
+      border: none;
+      font-size: 14px;
+      color: #888;
+      cursor: pointer;
+      font-weight: bold;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s ease;
+    }
+    /* 선택된 탭 강조 */
+    .tab-btn.active {
+      color: #d49a00;
+      border-bottom: 3px solid #ffcc00;
+      background-color: #fffaf0;
+    }
+
+    /* 채팅창 영역 */
     #chat-history {
       flex: 1;
       padding: 20px;
@@ -59,7 +88,7 @@
     .user { align-self: flex-end; background-color: #ffcc00; color: #333; border-bottom-right-radius: 2px; }
     .ai { align-self: flex-start; background-color: #eeeeee; color: #333; border-bottom-left-radius: 2px; }
     
-    /* 입력창 */
+    /* 입력창 영역 */
     #input-area {
       padding: 15px;
       display: flex;
@@ -72,7 +101,9 @@
       border: 1px solid #ddd;
       border-radius: 25px;
       outline: none;
+      font-size: 14px;
     }
+    #user-input:focus { border-color: #ffcc00; }
     #send-btn {
       margin-left: 10px;
       background: #ffcc00;
@@ -92,6 +123,12 @@
     <button id="delete-btn" onclick="clearHistory()">기록 삭제</button>
   </div>
   
+  <div id="age-tabs">
+    <button class="tab-btn active" onclick="changeAge('4~5세', this)">4~5세</button>
+    <button class="tab-btn" onclick="changeAge('6~7세', this)">6~7세</button>
+    <button class="tab-btn" onclick="changeAge('8~10세', this)">8~10세</button>
+  </div>
+  
   <div id="chat-history">
     <div class="message ai">안녕! 오늘 아이가 어떤 궁금한 점을 물어봤나요? 😊</div>
   </div>
@@ -105,8 +142,11 @@
 <script>
   let chatHistory = [];
   const chatHistoryDiv = document.getElementById('chat-history');
+  
+  // 🆕 현재 선택된 연령을 저장하는 변수 (기본값: 4~5세)
+  let currentAge = '4~5세';
 
-  // 메시지 화면 표시 함수
+  // 메시지를 화면에 그려주는 함수
   function renderMessage(text, sender) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${sender}`;
@@ -115,26 +155,54 @@
     chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
   }
 
-  // 기록 삭제 기능
+  // 대화 기록 삭제 함수
   function clearHistory() {
     if(confirm("대화 기록을 모두 삭제할까요?")) {
       chatHistory = [];
-      chatHistoryDiv.innerHTML = '<div class="message ai">기록이 삭제되었습니다. 새로운 대화를 시작해요! 😊</div>';
+      chatHistoryDiv.innerHTML = `<div class="message ai">기록이 삭제되었습니다. <strong>${currentAge}</strong> 아이와의 새로운 대화를 시작해요! 😊</div>`;
     }
   }
 
+  // 🆕 연령 탭을 클릭했을 때 실행되는 함수
+  function changeAge(age, btnElement) {
+    currentAge = age; // 선택된 연령 업데이트
+    
+    // 모든 탭의 active(선택됨) 디자인 제거
+    const tabs = document.querySelectorAll('.tab-btn');
+    tabs.forEach(tab => tab.classList.remove('active'));
+    
+    // 클릭한 탭만 active 디자인 추가
+    btnElement.classList.add('active');
+    
+    // 연령이 바뀌었다고 AI 안내 메시지 출력
+    renderMessage(`설정이 변경되었습니다. 지금부터 <strong>${currentAge}</strong> 수준에 맞춘 하브루타 대화를 도와드릴게요! ✨`, 'ai');
+  }
+
+  // 메인 전송 로직
   async function sendMessage() {
     const input = document.getElementById('user-input');
     const text = input.value.trim();
     if (!text) return;
 
+    // 사용자 질문 화면 출력 및 저장
     renderMessage(text, 'user');
     chatHistory.push({ "role": "user", "parts": [{ "text": text }] });
     input.value = '';
 
-    const systemPrompt = `너는 4~5세 아이 부모를 돕는 '하브루타 대화 코치'야. 반드시 JSON으로만 응답해. 형식: { "answer": "공감과 비유 설명", "question": "아이에게 던질 질문" }`;
+    // 🆕 선택된 연령(currentAge)이 시스템 프롬프트에 동적으로 들어갑니다!
+    const systemPrompt = `너는 ${currentAge} 아이 부모를 돕는 '하브루타 대화 코치'야. 아이의 인지 발달 수준에 맞게 단어와 비유를 선택해줘. 반드시 JSON으로만 응답해. 형식: { "answer": "공감과 비유 설명", "question": "아이의 사고력을 넓혀줄 수 있는 꼬리 질문" }`;
+
+    // 로딩 중 표시
+    const loadingId = "loading-" + Date.now();
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = "message ai";
+    loadingDiv.id = loadingId;
+    loadingDiv.textContent = "연령에 맞는 답변을 고민 중... 🤔";
+    chatHistoryDiv.appendChild(loadingDiv);
+    chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
 
     try {
+      // 서버 요청
       const response = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -145,20 +213,22 @@
       });
 
       const data = await response.json();
+      document.getElementById(loadingId).remove();
       
-      // AI 답변 추출 및 마크다운 청소 (핵심 로직)
+      // JSON 파싱 (마크다운 청소 로직 유지)
       const aiRaw = data.candidates[0].content.parts[0].text;
       const cleanText = aiRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanText);
 
-      // 화면 출력 (답변 + 꼬리질문)
+      // 화면에 출력
       renderMessage(parsed.answer + "<br><br><strong>💡 " + parsed.question + "</strong>", 'ai');
       
-      // 대화 기록 저장
+      // AI 원본 답변 기록에 저장
       chatHistory.push({ "role": "model", "parts": [{ "text": aiRaw }] });
 
     } catch (error) {
       console.error(error);
+      document.getElementById(loadingId)?.remove();
       renderMessage("잠시 연결이 원활하지 않아요. 다시 시도해 주세요!", "ai");
     }
   }
