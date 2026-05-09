@@ -80,16 +80,36 @@
       flex-direction: column;
       gap: 15px;
     }
-    .message { padding: 14px 18px; border-radius: 15px; font-size: 15px; line-height: 1.6; max-width: 85%; word-break: break-all; }
+    .message { padding: 14px 18px; border-radius: 15px; font-size: 15px; line-height: 1.6; max-width: 85%; word-break: break-all; position: relative; }
     .user { align-self: flex-end; background-color: #32d078; color: white; border-bottom-right-radius: 2px; }
     .ai { align-self: flex-start; background-color: #f1f3f5; color: #333; border-bottom-left-radius: 2px; }
     
-    /* 🆕 하브루타 질문 강조 스타일 */
+    /* 🔊 스피커 버튼 스타일 추가 */
+    .tts-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: #fff;
+      color: #1e874c;
+      border: 1px solid #32d078;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+    }
+    .tts-btn:hover {
+      background-color: #e8f5e9;
+    }
+
     .havruta-question {
       margin-top: 12px;
       font-size: 16px;
       font-weight: bold;
-      color: #1e874c; /* 진한 초록색으로 시선 유도 */
+      color: #1e874c;
       background-color: #e8f5e9;
       padding: 10px;
       border-radius: 10px;
@@ -169,7 +189,10 @@
   </div>
   
   <div id="chat-history">
-    <div class="message ai">안녕! 나는 돌봄교실 AI 선생님이야. 오늘 학교에서 제일 재밌었던 일이나 궁금했던 게 뭐야? 😃</div>
+    <div class="message ai">
+      안녕! 나는 돌봄교실 AI 선생님이야. 오늘 학교에서 제일 재밌었던 일이나 궁금했던 게 뭐야? 😃
+      <br><button class="tts-btn" onclick="speakText('안녕! 나는 돌봄교실 AI 선생님이야. 오늘 학교에서 제일 재밌었던 일이나 궁금했던 게 뭐야?')">🔊 읽어주기</button>
+    </div>
   </div>
 
   <div id="input-area">
@@ -183,6 +206,20 @@
   const chatHistoryDiv = document.getElementById('chat-history');
   let currentAge = '초등 1~2학년(돌봄교실)';
 
+  // 🔊 TTS (텍스트 음성 변환) 함수 추가
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel(); // 기존에 읽고 있던 음성 중지
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.lang = 'ko-KR'; // 한국어 설정
+      speech.rate = 0.95; // 아이들이 듣기 편하도록 살짝 느린 속도
+      speech.pitch = 1.2; // 친절한 선생님 느낌을 위해 약간 높은 톤
+      window.speechSynthesis.speak(speech);
+    } else {
+      alert("현재 브라우저에서는 음성 지원 기능을 사용할 수 없습니다.");
+    }
+  }
+
   function renderMessage(text, sender) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${sender}`;
@@ -194,7 +231,11 @@
   function clearHistory() {
     if(confirm("대화 기록을 지우고 새로 시작할까요?")) {
       chatHistory = [];
-      chatHistoryDiv.innerHTML = `<div class="message ai">기록이 삭제되었습니다. <strong>${currentAge}</strong> 친구와의 새로운 대화를 시작해요!</div>`;
+      window.speechSynthesis.cancel(); // 초기화 시 음성도 중지
+      chatHistoryDiv.innerHTML = `
+        <div class="message ai">기록이 삭제되었습니다. <strong>${currentAge}</strong> 친구와의 새로운 대화를 시작해요!
+        <br><button class="tts-btn" onclick="speakText('기록이 삭제되었습니다. 새로운 대화를 시작해요!')">🔊 읽어주기</button>
+        </div>`;
     }
   }
 
@@ -215,7 +256,6 @@
     chatHistory.push({ "role": "user", "parts": [{ "text": text }] });
     input.value = '';
 
-    // 🏆 [핵심 프롬프트 업데이트] 공감과 꼬리질문을 명확히 분리!
     const systemPrompt = `
       너는 ${currentAge} 아이가 방과 후 돌봄교실에서 대화하는 'AI 하브루타 선생님'이야.
       가장 중요한 원칙: 아이와의 대화는 반드시 아이가 스스로 생각하고 대답할 수 있는 '질문'으로 끝나야 해.
@@ -258,13 +298,18 @@
       const cleanText = aiRaw.replace(/```json/gi, '').replace(/```/g, '').trim();
       const parsed = JSON.parse(cleanText);
 
-      // 🏆 화면 출력부: 공감 텍스트 -> [강조된 하브루타 질문] -> 부모님 알림장
+      // 🔊 스피커로 읽어줄 텍스트 (공감 + 질문 부분만 추출)
+      const textToSpeak = (parsed.reply_empathy + " " + parsed.reply_question).replace(/"/g, '&quot;');
+
+      // 🏆 화면 출력부 (스피커 버튼 포함)
       const aiHtml = `
         <div>${parsed.reply_empathy}</div>
         
         <div class="havruta-question">
           🤔 ${parsed.reply_question}
         </div>
+        
+        <button class="tts-btn" onclick="speakText('${textToSpeak}')">🔊 질문 읽어주기</button>
         
         <div class="report-box">
           <div class="report-title">💌 퇴근길 학부모 알림장 도착!</div>
@@ -279,6 +324,10 @@
       `;
       
       renderMessage(aiHtml, 'ai');
+      
+      // 자동 재생을 원하시면 아래 주석(//)을 해제하세요.
+      // speakText(parsed.reply_empathy + " " + parsed.reply_question);
+
       chatHistory.push({ "role": "model", "parts": [{ "text": aiRaw }] });
 
     } catch (error) {
